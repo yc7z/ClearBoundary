@@ -59,9 +59,9 @@ if __name__ == "__main__":
     main(train_config)
     
     test_config = Config(
-        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/train_data",
-        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/val_data",
-        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/test_data",
+        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
+        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/val_data",
+        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/test_data",
         output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
         patch_size=10,

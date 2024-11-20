@@ -14,6 +14,6 @@
 #SBATCH --time=12:00:00
 
 module load cuda-12.4
-source /h/yuchongz/venvs/oats_venv/bin/activate
+source /h/yuchongz/venvs/clear_boundary_venv/bin/activate
 
-python -m run_prune
+python -m main
