@@ -3,11 +3,11 @@ from dataloader import ImageDataset
 from pathlib import Path
 from torch.utils.data import DataLoader
 from train import Trainer
+from utils.config import Config
 
-def main(config):
+def main(config: Config):
     wandb.login()
     wandb.init(project="clarify_boundary_transformer", config=config)
-    config = wandb.config
 
     # Dataset and DataLoader
     train_dataset = ImageDataset(
@@ -33,48 +33,48 @@ def main(config):
     if config.mode == "train":
         trainer.train(train_loader, val_loader)
     elif config.mode == "evaluate":
-        trainer.load_model(trainer.best_model_path)
         trainer.evaluate(test_loader, config.output_dir)
 
 
 if __name__ == "__main__":
-    tran_config = {
-        "train_data_dir": "path/to/train",
-        "val_data_dir": "path/to/val",
-        "test_data_dir": "path/to/test",
-        "output_dir": "path/to/output",
-        "checkpoint_dir": "path/to/checkpoints",
-        "patch_size": 32,
-        "batch_size": 16,
-        "n_blocks": 4,
-        "n_heads": 8,
-        "d_model": 256,
-        "d_hidden": 512,
-        "dropout_p": 0.1,
-        "lr": 1e-4,
-        "num_epochs": 100,
-        "validate_every": 5,
-        "device": "cuda",
-        "mode": "train", 
-    }
-    main(tran_config)
+    train_config = Config(
+        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/train_data",
+        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/val_data",
+        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/test_data",
+        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test",
+        checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
+        patch_size=10,
+        batch_size=64,
+        n_blocks=6,
+        n_heads=4,
+        d_model=384,
+        d_hidden=384,
+        lr=2e-4,
+        num_epochs=1,
+        validate_every=1,
+        mode="train",
+        load_from_checkpoint=False,
+    )
+
+    main(train_config)
     
-    tran_config = {
-        "train_data_dir": "path/to/train",
-        "val_data_dir": "path/to/val",
-        "test_data_dir": "path/to/test",
-        "output_dir": "path/to/output",
-        "checkpoint_dir": "path/to/checkpoints",
-        "patch_size": 32,
-        "batch_size": 16,
-        "n_blocks": 4,
-        "n_heads": 8,
-        "d_model": 256,
-        "d_hidden": 512,
-        "dropout_p": 0.1,
-        "lr": 1e-4,
-        "num_epochs": 100,
-        "validate_every": 5,
-        "device": "cuda",
-        "mode": "evaluate",  # Can be "train" or "evaluate"
-    }
+    test_config = Config(
+        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/train_data",
+        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/val_data",
+        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/test_data",
+        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test",
+        checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
+        patch_size=10,
+        batch_size=64,
+        n_blocks=6,
+        n_heads=4,
+        d_model=384,
+        d_hidden=384,
+        lr=2e-4,
+        num_epochs=1,
+        validate_every=1,
+        mode="evaluate",
+        load_from_checkpoint=True,
+    )
+    
+    main(test_config)
