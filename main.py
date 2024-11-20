@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from train import Trainer
 
 def main(config):
+    wandb.login()
     wandb.init(project="clarify_boundary_transformer", config=config)
     config = wandb.config
 
