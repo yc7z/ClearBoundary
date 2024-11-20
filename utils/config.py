@@ -22,6 +22,7 @@ class Config:
         validate_every: int = 5,
         device: Optional[str] = None,
         mode: str = "train",
+        load_from_checkpoint: bool = False,
     ):
         self.train_data_dir = Path(train_data_dir)
         self.val_data_dir = Path(val_data_dir)
@@ -40,9 +41,7 @@ class Config:
         self.validate_every = validate_every
         self.device = device if device else ("cuda" if torch.cuda.is_available() else "cpu")
         self.mode = mode
-
-        # Validate inputs
-        self.validate()
+        self.load_from_checkpoint = load_from_checkpoint
 
         # Create directories if needed
         self.output_dir.mkdir(parents=True, exist_ok=True)

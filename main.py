@@ -38,8 +38,7 @@ def main(config):
 
 
 if __name__ == "__main__":
-    # Example config
-    config = {
+    tran_config = {
         "train_data_dir": "path/to/train",
         "val_data_dir": "path/to/val",
         "test_data_dir": "path/to/test",
@@ -56,6 +55,26 @@ if __name__ == "__main__":
         "num_epochs": 100,
         "validate_every": 5,
         "device": "cuda",
-        "mode": "train",  # Can be "train" or "evaluate"
+        "mode": "train", 
     }
-    main(config)
+    main(tran_config)
+    
+    tran_config = {
+        "train_data_dir": "path/to/train",
+        "val_data_dir": "path/to/val",
+        "test_data_dir": "path/to/test",
+        "output_dir": "path/to/output",
+        "checkpoint_dir": "path/to/checkpoints",
+        "patch_size": 32,
+        "batch_size": 16,
+        "n_blocks": 4,
+        "n_heads": 8,
+        "d_model": 256,
+        "d_hidden": 512,
+        "dropout_p": 0.1,
+        "lr": 1e-4,
+        "num_epochs": 100,
+        "validate_every": 5,
+        "device": "cuda",
+        "mode": "evaluate",  # Can be "train" or "evaluate"
+    }

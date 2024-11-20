@@ -4,28 +4,27 @@ from torch.optim import AdamW
 from torch.nn import MSELoss
 import wandb
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from torchvision import transforms
 
-# Import the dataset and model
-from dataloader import ImageDataset
 from models.transformer import Transformer
 from utils.config import Config
+from checkpointer import save_checkpoint, load_checkpoint
 
 
 class Trainer:
     def __init__(self, config: Config, device=None):
         self.config = config
         self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
-        self.model = self.initialize_model().to(self.device)
+        self.model = self.initialize_model(config.load_from_checkpoint).to(self.device)
         self.criterion = MSELoss()
         self.optimizer = AdamW(self.model.parameters(), lr=config.lr)
         self.best_val_loss = float("inf")
         self.best_model_path = Path(config.checkpoint_dir) / "best_model.pth"
 
-    def initialize_model(self):
+    def initialize_model(self, load_from_checkpoint: bool = False):
         """Initialize the model."""
-        return Transformer(
+        model = Transformer(
             n_blocks=self.config.n_blocks,
             n_heads=self.config.n_heads,
             d_model=self.config.d_model,
@@ -34,16 +33,12 @@ class Trainer:
             d_output=self.config.patch_size**2 * 3,
             dropout_p=self.config.dropout_p,
         )
+        if load_from_checkpoint:
+            last_epoch = load_checkpoint(self.model, self.best_model_path, self.device)
+            self.config.num_epochs -= last_epoch
+        return model
 
-    def save_model(self, path: Path):
-        """Save the model to a given path."""
-        torch.save(self.model.state_dict(), path)
-
-    def load_model(self, path: Path):
-        """Load the model from a given path."""
-        self.model.load_state_dict(torch.load(path))
-
-    def train_one_epoch(self, dataloader):
+    def train_one_epoch(self, dataloader: DataLoader):
         """Train the model for one epoch."""
         self.model.train()
         epoch_loss = 0.0
@@ -61,7 +56,7 @@ class Trainer:
 
         return epoch_loss / len(dataloader.dataset)
 
-    def validate_one_epoch(self, dataloader):
+    def validate_one_epoch(self, dataloader: DataLoader):
         """Validate the model for one epoch."""
         self.model.eval()
         epoch_loss = 0.0
@@ -77,7 +72,7 @@ class Trainer:
 
         return epoch_loss / len(dataloader.dataset)
 
-    def prepare_data(self, noisy_patches, clean_patches):
+    def prepare_data(self, noisy_patches, clean_patches) -> Tuple[torch.Tensor, torch.Tensor]:
         """Prepare data for training."""
         noisy_patches = noisy_patches.to(self.device)
         clean_patches = clean_patches.to(self.device)
@@ -88,7 +83,7 @@ class Trainer:
 
         return noisy_patches, clean_patches
 
-    def train(self, train_loader, val_loader):
+    def train(self, train_loader: DataLoader, val_loader: DataLoader) -> None:
         """Train the model."""
         for epoch in range(self.config.num_epochs):
             train_loss = self.train_one_epoch(train_loader)
@@ -101,9 +96,9 @@ class Trainer:
                 # Save the best model
                 if val_loss < self.best_val_loss:
                     self.best_val_loss = val_loss
-                    self.save_model(self.best_model_path)
+                    save_checkpoint(self.model, epoch, self.best_model_path)
 
-    def evaluate(self, test_loader, output_dir: Optional[Path] = None):
+    def evaluate(self, test_loader: DataLoader, output_dir: Optional[Path] = None) -> None:
         """Evaluate the model and optionally save outputs."""
         self.model.eval()
         output_dir = Path(output_dir) if output_dir else None
