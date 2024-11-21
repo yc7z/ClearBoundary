@@ -120,7 +120,7 @@ class Transformer(nn.Module):
         for transformer_block in self.transformer_blocks:
             x = transformer_block.forward(x)
         x = self.last_layer_norm(x)
-        return self.final_projection_layer.forward(x)
+        return self.final_projection_layer.forward(x[:, -1, :])
 
 
 class RMSTransformerBlock(nn.Module):
@@ -162,4 +162,4 @@ class RMSTransformer(nn.Module):
         for transformer_block in self.transformer_blocks:
             x = transformer_block.forward(x)
         x = self.last_rms_norm(x)
-        return self.final_projection_layer.forward(x)
+        return self.final_projection_layer.forward(x[:, -1, :])

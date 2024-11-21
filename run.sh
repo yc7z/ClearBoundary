@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
-#SBATCH --partition=a40
+#SBATCH --partition=rtx6000
 #SBATCH --qos=normal
 #SBATCH --job-name=train_clear_boundary
 #SBATCH --output=%j_%x.out
@@ -14,6 +14,6 @@
 #SBATCH --time=12:00:00
 
 module load cuda-12.4
-source /h/yuchongz/venvs/clear_boundary_venv/bin/activate
+source /scratch/ssd004/scratch/yuchongz/python_venvs/clear_boundary_venv/bin/activate
 
 python -m main

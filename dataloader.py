@@ -94,15 +94,15 @@ class ImageDataset(Dataset):
         return torch.stack(inputs), torch.stack(targets)
 
 
-if __name__ == '__main__':
-    data_dir = Path("data/")
-    patch_size = 15
-    transform = transforms.Compose([
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    ])
-    dataset = ImageDataset(data_dir=data_dir, patch_size=patch_size, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+# if __name__ == '__main__':
+#     data_dir = Path("data/")
+#     patch_size = 15
+#     transform = transforms.Compose([
+#         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+#     ])
+#     dataset = ImageDataset(data_dir=data_dir, patch_size=patch_size, transform=transform)
+#     dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
-    for batch_inputs, batch_targets in dataloader:
-        print(f"Inputs: {batch_inputs.shape}, Targets: {batch_targets.shape}")
-        break
+#     for batch_inputs, batch_targets in dataloader:
+#         print(f"Inputs: {batch_inputs.shape}, Targets: {batch_targets.shape}")
+#         break

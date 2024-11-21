@@ -23,9 +23,9 @@ def main(config: Config):
         patch_size=config.patch_size,
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=4)
 
     # Initialize Trainer
     trainer = Trainer(config)
@@ -38,25 +38,26 @@ def main(config: Config):
 
 if __name__ == "__main__":
     train_config = Config(
-        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/train_data",
-        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/val_data",
-        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/boundary_dataset/test_data",
+        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
+        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/val_data",
+        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/test_data",
         output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
         patch_size=10,
-        batch_size=64,
         n_blocks=6,
         n_heads=4,
         d_model=384,
         d_hidden=384,
         lr=2e-4,
-        num_epochs=1,
-        validate_every=1,
+        num_epochs=50,
+        validate_every=5,
         mode="train",
         load_from_checkpoint=False,
     )
 
     main(train_config)
+    
+    print("Training complete.")
     
     test_config = Config(
         train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
@@ -65,7 +66,6 @@ if __name__ == "__main__":
         output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
         patch_size=10,
-        batch_size=64,
         n_blocks=6,
         n_heads=4,
         d_model=384,

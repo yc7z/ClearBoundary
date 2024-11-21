@@ -11,7 +11,6 @@ class Config:
         output_dir: str = ".",
         checkpoint_dir: str = ".",
         patch_size: int = 15,
-        batch_size: int = 32,
         n_blocks: int = 6,
         n_heads: int = 4,
         d_model: int = 384,
@@ -29,8 +28,8 @@ class Config:
         self.test_data_dir = Path(test_data_dir)
         self.output_dir = Path(output_dir)
         self.checkpoint_dir = Path(checkpoint_dir)
+        # patch_size determines batch size, which is the same as the number of patches.
         self.patch_size = patch_size
-        self.batch_size = batch_size
         self.n_blocks = n_blocks
         self.n_heads = n_heads
         self.d_model = d_model

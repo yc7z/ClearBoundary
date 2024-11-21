@@ -10,17 +10,17 @@ from torchvision import transforms
 from models.transformer import Transformer
 from utils.config import Config
 from checkpointer import save_checkpoint, load_checkpoint
-
+import math
 
 class Trainer:
     def __init__(self, config: Config, device=None):
         self.config = config
         self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
-        self.model = self.initialize_model(config.load_from_checkpoint).to(self.device)
         self.criterion = MSELoss()
-        self.optimizer = AdamW(self.model.parameters(), lr=config.lr)
         self.best_val_loss = float("inf")
         self.best_model_path = Path(config.checkpoint_dir) / "best_model.pth"
+        self.model = self.initialize_model(config.load_from_checkpoint).to(self.device)
+        self.optimizer = AdamW(self.model.parameters(), lr=config.lr)
 
     def initialize_model(self, load_from_checkpoint: bool = False):
         """Initialize the model."""
@@ -34,7 +34,7 @@ class Trainer:
             dropout_p=self.config.dropout_p,
         )
         if load_from_checkpoint:
-            last_epoch = load_checkpoint(self.model, self.best_model_path, self.device)
+            last_epoch = load_checkpoint(model, self.best_model_path, self.device)
             self.config.num_epochs -= last_epoch
         return model
 
@@ -78,8 +78,12 @@ class Trainer:
         clean_patches = clean_patches.to(self.device)
 
         # Flatten patches for the transformer
-        noisy_patches = noisy_patches.view(noisy_patches.size(0), noisy_patches.size(1), -1)
-        clean_patches = clean_patches.view(clean_patches.size(0), clean_patches.size(1), -1)
+        noisy_patches = torch.squeeze(noisy_patches)
+        clean_patches = torch.squeeze(clean_patches)
+        noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), noisy_patches.size(1), -1)
+        clean_patches = clean_patches.squeeze().view(clean_patches.size(0), -1)
+        # print(noisy_patches.shape)
+        # print(clean_patches.shape)
 
         return noisy_patches, clean_patches
 
@@ -111,24 +115,54 @@ class Trainer:
 
                 # outputs has size (batch_size, num_patches, n_channels, patch_size, patch_size)
                 outputs = self.model(noisy_patches)
-                D = int(torch.sqrt(outputs.size(1)) * self.config.patch_size)
-                outputs = outputs.view(outputs.size(0), outputs.size(1), 3, self.config.patch_size, self.config.patch_size)
+                D = int(math.sqrt(outputs.size(0)) * self.config.patch_size)
+                outputs = outputs.view(-1, 3, self.config.patch_size, self.config.patch_size)
+                clean_patches = clean_patches.view(-1, 3, self.config.patch_size, self.config.patch_size)
 
                 if output_dir:
-                    for i in range(outputs.size(0)):
-                        for j in range(outputs.size(1)):
-                            output_patch = transforms.ToPILImage()(outputs[i, j].cpu())
-                            clean_patch = transforms.ToPILImage()(clean_patches[i, j].cpu())
-                            output_patch.save(output_dir / f"test_{idx}_output_patch_{i}_{j}.png")
-                            clean_patch.save(output_dir / f"test_{idx}_clean_patch_{i}_{j}.png")
+                    # for i in range(outputs.size(0)):
+                    #     output_patch = transforms.ToPILImage()(outputs[i].cpu())
+                    #     clean_patch = transforms.ToPILImage()(clean_patches[i].cpu())
+                        
+                    #     output_patch.save(output_dir / f"test_{idx}_output_patch_{i}.png")
+                    #     clean_patch.save(output_dir / f"test_{idx}_clean_patch_{i}.png")
                     
-                        # Also save the entire image.
-                        # We do this by reshaping outputs into (batch_size, n_channels, D, D)
-                        # where D = sqrt(num_patches) * patch_size
-                        outputs_reshaped = outputs.view(outputs.size(0), 3, D, D)
-                        clean_patches_reshaped = clean_patches.view(clean_patches.size(0), 3, D, D)
-                        output_image = transforms.ToPILImage()(outputs_reshaped.cpu())
-                        clean_image = transforms.ToPILImage()(clean_patches_reshaped.cpu())
-                        output_image.save(output_dir / f"test_{idx}_output_image.png")
-                        clean_image.save(output_dir / f"test_{idx}_clean_image.png")
+                    # Save the entire image.
+                    outputs_reconstruction = reconstruct_image(patches=outputs, original_shape=(D, D))
+                    clean_patches_reconstruction = reconstruct_image(patches=clean_patches, original_shape=(D, D))
+                    output_image = transforms.ToPILImage()(outputs_reconstruction.cpu())
+                    clean_image = transforms.ToPILImage()(clean_patches_reconstruction.cpu())
+                    output_image.save(output_dir / f"test_{idx}_output_image.png")
+                    clean_image.save(output_dir / f"test_{idx}_clean_image.png")
 
+
+def reconstruct_image(patches: torch.Tensor, original_shape: Tuple[int, int]) -> torch.Tensor:
+    """
+    Reconstructs the original image from patches.
+
+    Args:
+        patches (torch.Tensor): Tensor of shape (n_patches, 3, patch_size, patch_size).
+        original_shape (Tuple[int, int]): Original image dimensions (height, width).
+
+    Returns:
+        torch.Tensor: Reconstructed image of shape (3, original_height, original_width).
+    """
+    n_patches, channels, patch_size, _ = patches.shape
+    original_height, original_width = original_shape
+
+    # Check dimensions
+    assert original_height % patch_size == 0 and original_width % patch_size == 0, \
+        "Original image dimensions must be divisible by patch size."
+
+    # Calculate grid size
+    h_patches = original_height // patch_size
+    w_patches = original_width // patch_size
+
+    # Reshape patches into grid
+    image = (
+        patches.view(h_patches, w_patches, channels, patch_size, patch_size)
+        .permute(2, 0, 3, 1, 4)  # Reorder dimensions to (C, H, h_patches, W, w_patches)
+        .contiguous()
+        .view(channels, original_height, original_width)
+    )
+    return image
