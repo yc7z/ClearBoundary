@@ -15,13 +15,14 @@ class Config:
         n_heads: int = 4,
         d_model: int = 384,
         d_hidden: int = 384,
-        dropout_p: float = 0.1,
+        dropout_p: float = 0.0,
         lr: float = 1e-4,
         num_epochs: int = 60,
         validate_every: int = 5,
         device: Optional[str] = None,
         mode: str = "train",
         load_from_checkpoint: bool = False,
+        run_id: int = 1
     ):
         self.train_data_dir = Path(train_data_dir)
         self.val_data_dir = Path(val_data_dir)
@@ -45,9 +46,11 @@ class Config:
         # Create directories if needed
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.run_id = run_id
 
         # Default checkpoint path
-        self.checkpoint_path = self.checkpoint_dir / "best_model.pt"
+        self.checkpoint_path = self.checkpoint_dir / f"best_model_run{self.run_id}.pth"
 
     def __repr__(self):
         """

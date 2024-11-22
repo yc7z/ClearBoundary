@@ -16,9 +16,10 @@ class Trainer:
     def __init__(self, config: Config, device=None):
         self.config = config
         self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.run_id = config.run_id
         self.criterion = MSELoss()
         self.best_val_loss = float("inf")
-        self.best_model_path = Path(config.checkpoint_dir) / "best_model.pth"
+        self.best_model_path = Path(config.checkpoint_dir) / f"best_model_run{self.run_id}.pth"
         self.model = self.initialize_model(config.load_from_checkpoint).to(self.device)
         self.optimizer = AdamW(self.model.parameters(), lr=config.lr)
 
@@ -29,8 +30,8 @@ class Trainer:
             n_heads=self.config.n_heads,
             d_model=self.config.d_model,
             d_hidden=self.config.d_hidden,
-            d_input=self.config.patch_size**2 * 3,
-            d_output=self.config.patch_size**2 * 3,
+            d_input=self.config.patch_size**2 * 1,
+            d_output=self.config.patch_size**2 * 1,
             dropout_p=self.config.dropout_p,
         )
         if load_from_checkpoint:
@@ -77,13 +78,21 @@ class Trainer:
         noisy_patches = noisy_patches.to(self.device)
         clean_patches = clean_patches.to(self.device)
 
+
         # Flatten patches for the transformer
         noisy_patches = torch.squeeze(noisy_patches)
         clean_patches = torch.squeeze(clean_patches)
         noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), noisy_patches.size(1), -1)
+        # noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), -1)
         clean_patches = clean_patches.squeeze().view(clean_patches.size(0), -1)
-        # print(noisy_patches.shape)
+        # clean_patches = torch.unsqueeze(clean_patches, 0)
+        # clean_patches = clean_patches.view(clean_patches.size(0), -1)
+        # clean_patches = torch.squeeze(clean_patches)
+        
         # print(clean_patches.shape)
+        # print(noisy_patches.shape)
+
+
 
         return noisy_patches, clean_patches
 
@@ -116,8 +125,8 @@ class Trainer:
                 # outputs has size (batch_size, num_patches, n_channels, patch_size, patch_size)
                 outputs = self.model(noisy_patches)
                 D = int(math.sqrt(outputs.size(0)) * self.config.patch_size)
-                outputs = outputs.view(-1, 3, self.config.patch_size, self.config.patch_size)
-                clean_patches = clean_patches.view(-1, 3, self.config.patch_size, self.config.patch_size)
+                outputs = outputs.view(-1, 1, self.config.patch_size, self.config.patch_size)
+                clean_patches = clean_patches.view(-1, 1, self.config.patch_size, self.config.patch_size)
 
                 if output_dir:
                     # for i in range(outputs.size(0)):
@@ -134,6 +143,9 @@ class Trainer:
                     clean_image = transforms.ToPILImage()(clean_patches_reconstruction.cpu())
                     output_image.save(output_dir / f"test_{idx}_output_image.png")
                     clean_image.save(output_dir / f"test_{idx}_clean_image.png")
+                
+                if idx > 10:
+                    break
 
 
 def reconstruct_image(patches: torch.Tensor, original_shape: Tuple[int, int]) -> torch.Tensor:

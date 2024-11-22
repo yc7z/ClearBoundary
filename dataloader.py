@@ -52,9 +52,9 @@ class ImageDataset(Dataset):
 
         return data_points
 
-    def _extract_patches(self, image: Image.Image) -> List[torch.Tensor]:
+    def _extract_patches(self, image_tensor: torch.Tensor) -> List[torch.Tensor]:
         """Splits an image into patches of size patch_size x patch_size."""
-        image_tensor = transforms.ToTensor()(image)  # Convert to tensor
+        # image_tensor = transforms.ToTensor()(image)  # Convert to tensor
         _, h, w = image_tensor.shape
 
         if h % self.patch_size != 0 or w % self.patch_size != 0:
@@ -62,7 +62,7 @@ class ImageDataset(Dataset):
 
         patches = image_tensor.unfold(1, self.patch_size, self.patch_size)
         patches = patches.unfold(2, self.patch_size, self.patch_size)
-        patches = patches.contiguous().view(3, -1, self.patch_size, self.patch_size)
+        patches = patches.contiguous().view(1, -1, self.patch_size, self.patch_size)
         patches = patches.permute(1, 0, 2, 3)  # (num_patches, channels, patch_size, patch_size)
         return [patch for patch in patches]
 
@@ -71,11 +71,12 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         data_point = self.data_points[idx]
-        clean_image = Image.open(data_point["clean"]).convert("RGB")
-        noisy_images = [Image.open(p).convert("RGB") for p in data_point["noisy"]]
+        clean_image = Image.open(data_point["clean"]).resize((150, 150))
+        clean_image = transforms.ToTensor()(clean_image)
+        noisy_images = [transforms.ToTensor()(Image.open(p).resize((150, 150))) for p in data_point["noisy"]]
 
         # Extract patches from clean and noisy images
-        clean_patches = self._extract_patches(clean_image)
+        clean_patches = self._extract_patches(clean_image * (clean_image > 0.15))
         noisy_patches_list = [self._extract_patches(noisy) for noisy in noisy_images]
 
         # Create data points for each patch
