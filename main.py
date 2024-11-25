@@ -33,8 +33,7 @@ def main(config: Config):
     if config.mode == "train":
         trainer.train(train_loader, val_loader)
     elif config.mode == "evaluate":
-        # trainer.evaluate(test_loader, config.output_dir)
-        trainer.evaluate(train_loader, config.output_dir)
+        trainer.evaluate(test_loader, config.output_dir)
 
         
 
@@ -44,7 +43,7 @@ if __name__ == "__main__":
         train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
         val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/val_data",
         test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/test_data",
-        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_8",
+        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_9",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
         patch_size=15,
         n_blocks=6,
@@ -53,12 +52,11 @@ if __name__ == "__main__":
         d_hidden=384,
         dropout_p=0.1,
         lr=2e-4,
-        # lr=0.2,
-        num_epochs=1,
-        validate_every=1,
+        num_epochs=100,
+        validate_every=5,
         mode="train",
         load_from_checkpoint=False,
-        run_id=8,
+        run_id=9,
     )
 
     main(train_config)
@@ -69,7 +67,7 @@ if __name__ == "__main__":
         train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
         val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/val_data",
         test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/test_data",
-        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_8",
+        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_9",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
         patch_size=15,
         n_blocks=6,
@@ -82,7 +80,7 @@ if __name__ == "__main__":
         validate_every=1,
         mode="evaluate",
         load_from_checkpoint=True,
-        run_id=8,
+        run_id=9,
     )
     
     main(test_config)

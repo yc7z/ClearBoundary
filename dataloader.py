@@ -6,6 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 import numpy as np
+import re
 
 class ImageDataset(Dataset):
     def __init__(
@@ -28,12 +29,17 @@ class ImageDataset(Dataset):
     def _prepare_data(self) -> List[Dict[str, List[Path]]]:
         """Prepares the dataset by indexing clean and noisy images."""
         data_points = []
+        img_pattern = re.compile(r'.*clean_img_boundaries.*')
 
         for image_folder in self.data_dir.iterdir():
-            if not image_folder.is_dir():
+            if not image_folder.is_dir() or 'lol' in str(image_folder):
                 continue
+            
+            for file_name in image_folder.iterdir():
+                if img_pattern.match(str(file_name)):
+                    clean_image_path = file_name
 
-            clean_image_path = image_folder / "clean_img_boundaries.png"
+            # clean_image_path = image_folder / "clean_img_boundaries.png"
             if not clean_image_path.exists():
                 raise FileNotFoundError(f"Missing clean image: {clean_image_path}")
 

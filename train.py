@@ -11,6 +11,8 @@ from models.transformer import Transformer
 from utils.config import Config
 from checkpointer import save_checkpoint, load_checkpoint
 import math
+import numpy as np
+import os
 
 class Trainer:
     def __init__(self, config: Config, device=None):
@@ -78,7 +80,6 @@ class Trainer:
         noisy_patches = noisy_patches.to(self.device)
         clean_patches = clean_patches.to(self.device)
 
-
         # Flatten patches for the transformer
         noisy_patches = torch.squeeze(noisy_patches)
         clean_patches = torch.squeeze(clean_patches)
@@ -91,8 +92,6 @@ class Trainer:
         
         # print(clean_patches.shape)
         # print(noisy_patches.shape)
-
-
 
         return noisy_patches, clean_patches
 
@@ -110,6 +109,10 @@ class Trainer:
                 if val_loss < self.best_val_loss:
                     self.best_val_loss = val_loss
                     save_checkpoint(self.model, epoch, self.best_model_path)
+                    
+                    artifact = wandb.Artifact("best_model_checkpoint", type="model")
+                    artifact.add_file(str(self.best_model_path))
+                    wandb.log_artifact(artifact)
 
     def evaluate(self, test_loader: DataLoader, output_dir: Optional[Path] = None) -> None:
         """Evaluate the model and optionally save outputs."""
@@ -128,6 +131,14 @@ class Trainer:
                 outputs = outputs.view(-1, 1, self.config.patch_size, self.config.patch_size)
                 clean_patches = clean_patches.view(-1, 1, self.config.patch_size, self.config.patch_size)
 
+                if not(os.path.exists(f'{output_dir}/input_imgs_{idx}') and os.path.isdir(f'{output_dir}/input_imgs_{idx}')):
+                    os.mkdir(f'{output_dir}/input_imgs_{idx}')
+ 
+                for i in range(noisy_patches.shape[1]):
+                    input_reconstruction = reconstruct_image(patches=noisy_patches[:,i,:].view(-1, 1, self.config.patch_size, self.config.patch_size), original_shape=(D, D))
+                    input_image = transforms.ToPILImage()(input_reconstruction.cpu())
+                    input_image.save(f'{output_dir}/input_imgs_{idx}/test_{idx}_input_{i}.png')
+                    
                 if output_dir:
                     # for i in range(outputs.size(0)):
                     #     output_patch = transforms.ToPILImage()(outputs[i].cpu())
@@ -139,13 +150,10 @@ class Trainer:
                     # Save the entire image.
                     outputs_reconstruction = reconstruct_image(patches=outputs, original_shape=(D, D))
                     clean_patches_reconstruction = reconstruct_image(patches=clean_patches, original_shape=(D, D))
-                    output_image = transforms.ToPILImage()(outputs_reconstruction.cpu())
-                    clean_image = transforms.ToPILImage()(clean_patches_reconstruction.cpu())
+                    output_image = transforms.ToPILImage()(np.clip(outputs_reconstruction.cpu(), 0, 1))
+                    clean_image = transforms.ToPILImage()(np.clip(clean_patches_reconstruction.cpu(), 0, 1))
                     output_image.save(output_dir / f"test_{idx}_output_image.png")
                     clean_image.save(output_dir / f"test_{idx}_clean_image.png")
-                
-                if idx > 10:
-                    break
 
 
 def reconstruct_image(patches: torch.Tensor, original_shape: Tuple[int, int]) -> torch.Tensor:
