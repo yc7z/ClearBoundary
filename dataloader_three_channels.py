@@ -7,11 +7,15 @@ from torchvision import transforms
 from PIL import Image
 import re
 
+from utils import patches_fun
+
 class ImageDataset(Dataset):
     def __init__(
         self,
         data_dir: Path,
         patch_size: int,
+        #padding: int,
+        #stride: int,
         transform: callable = None,
     ):
         """
@@ -22,13 +26,17 @@ class ImageDataset(Dataset):
         """
         self.data_dir = data_dir
         self.patch_size = patch_size
+        #self.padding = padding
+        #self.stride = stride
         self.transform = transform
         self.data_points = self._prepare_data()
 
     def _prepare_data(self) -> List[Dict[str, List[Path]]]:
         """Prepares the dataset by indexing clean and noisy images."""
         data_points = []
-        img_pattern = re.compile(r'.*clean_img_boundaries.*')
+        img_pattern = re.compile(r'.*clean_img_?.png')
+
+        input_pattern = re.compile(r'.*input_img_?.png')
 
         for image_folder in self.data_dir.iterdir():
             if not image_folder.is_dir() or 'lol' in str(image_folder):
@@ -41,6 +49,17 @@ class ImageDataset(Dataset):
             # clean_image_path = image_folder / "clean_img_boundaries.png"
             if not clean_image_path.exists():
                 raise FileNotFoundError(f"Missing clean image: {clean_image_path}")
+            
+
+            for file_name in image_folder.iterdir():
+                if input_pattern.match(str(file_name)):
+                    input_image_path = file_name
+
+            if not input_image_path.exists():
+                raise FileNotFoundError(f"Missing clean image: {input_image_path}")
+            
+            noisy_paths = []
+            noisy_paths.append([input_image_path])
 
             for noise_level_folder in image_folder.iterdir():
                 if not noise_level_folder.is_dir():
@@ -50,10 +69,12 @@ class ImageDataset(Dataset):
                 if not noisy_image_paths:
                     raise FileNotFoundError(f"No noisy images in {noise_level_folder}")
 
-                data_points.append({
-                    "clean": clean_image_path,
-                    "noisy": noisy_image_paths,
-                })
+                noisy_paths.append(noisy_image_paths)
+
+            data_points.append({
+                "clean": clean_image_path,
+                "noisy": sum(noisy_paths, []), #noisy_image_paths,
+            })
 
         return data_points
 
@@ -69,6 +90,7 @@ class ImageDataset(Dataset):
         patches = patches.unfold(2, self.patch_size, self.patch_size)
         patches = patches.contiguous().view(3, -1, self.patch_size, self.patch_size)
         patches = patches.permute(1, 0, 2, 3)  # (num_patches, channels, patch_size, patch_size)
+        #patches = patches_fun.extract_patches_2ds(torch.unsqueeze(image_tensor, 0), self.patch_size, padding=self.patch_size + 1, stride=5)
         return [patch for patch in patches]
 
     def __len__(self):
