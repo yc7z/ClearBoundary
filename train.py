@@ -80,12 +80,15 @@ class Trainer:
         noisy_patches = noisy_patches.to(self.device)
         clean_patches = clean_patches.to(self.device)
 
-        # Flatten patches for the transformer
+        # # Flatten patches for the transformer
         noisy_patches = torch.squeeze(noisy_patches)
         clean_patches = torch.squeeze(clean_patches)
+        
+        # For 1 channel
         noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), noisy_patches.size(1), -1)
-        # noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), -1)
         clean_patches = clean_patches.squeeze().view(clean_patches.size(0), -1)
+
+        # noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), -1)
         # clean_patches = torch.unsqueeze(clean_patches, 0)
         # clean_patches = clean_patches.view(clean_patches.size(0), -1)
         # clean_patches = torch.squeeze(clean_patches)
