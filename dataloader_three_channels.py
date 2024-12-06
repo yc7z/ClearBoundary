@@ -41,6 +41,9 @@ class ImageDataset(Dataset):
         for image_folder in self.data_dir.iterdir():
             if not image_folder.is_dir() or 'lol' in str(image_folder):
                 continue
+
+            #if not "building" in str(image_folder):
+            #    continue
             
             for file_name in image_folder.iterdir():
                 if img_pattern.match(str(file_name)):
@@ -65,6 +68,9 @@ class ImageDataset(Dataset):
                 if not noise_level_folder.is_dir():
                     continue
 
+                #if not "0.1" in str(noise_level_folder):
+                #    continue
+
                 noisy_image_paths = sorted(noise_level_folder.glob("*.png"))
                 if not noisy_image_paths:
                     raise FileNotFoundError(f"No noisy images in {noise_level_folder}")
@@ -86,11 +92,11 @@ class ImageDataset(Dataset):
         if h % self.patch_size != 0 or w % self.patch_size != 0:
             raise ValueError("Image dimensions must be divisible by patch_size.")
 
-        patches = image_tensor.unfold(1, self.patch_size, self.patch_size)
-        patches = patches.unfold(2, self.patch_size, self.patch_size)
-        patches = patches.contiguous().view(3, -1, self.patch_size, self.patch_size)
-        patches = patches.permute(1, 0, 2, 3)  # (num_patches, channels, patch_size, patch_size)
-        #patches = patches_fun.extract_patches_2ds(torch.unsqueeze(image_tensor, 0), self.patch_size, padding=self.patch_size + 1, stride=5)
+        #patches = image_tensor.unfold(1, self.patch_size, self.patch_size)
+        #patches = patches.unfold(2, self.patch_size, self.patch_size)
+        #patches = patches.contiguous().view(3, -1, self.patch_size, self.patch_size)
+        #patches = patches.permute(1, 0, 2, 3)  # (num_patches, channels, patch_size, patch_size)
+        patches = patches_fun.extract_patches_2ds(torch.unsqueeze(image_tensor, 0), self.patch_size, padding=self.patch_size, stride=10)
         return [patch for patch in patches]
 
     def __len__(self):
@@ -103,7 +109,7 @@ class ImageDataset(Dataset):
         noisy_images = [transforms.ToTensor()(Image.open(p).convert("RGB")) for p in data_point["noisy"]]
 
         # Extract patches from clean and noisy images
-        clean_patches = self._extract_patches(clean_image * (clean_image > 0.15))
+        clean_patches = self._extract_patches(clean_image)
         noisy_patches_list = [self._extract_patches(noisy) for noisy in noisy_images]
 
         # Create data points for each patch
