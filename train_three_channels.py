@@ -14,6 +14,8 @@ import math
 import numpy as np
 import os
 
+from utils import patches_fun
+
 class Trainer:
     def __init__(self, config: Config, device=None):
         self.config = config
@@ -102,6 +104,8 @@ class Trainer:
             train_loss = self.train_one_epoch(train_loader)
             wandb.log({"epoch": epoch, "train_loss": train_loss})
 
+            print("Finished epoch: ", epoch)
+
             if (epoch + 1) % self.config.validate_every == 0:
                 val_loss = self.validate_one_epoch(val_loader)
                 wandb.log({"epoch": epoch, "val_loss": val_loss})
@@ -135,17 +139,26 @@ class Trainer:
                 if not(os.path.exists(f'{output_dir}/input_imgs_{idx}') and os.path.isdir(f'{output_dir}/input_imgs_{idx}')):
                     os.mkdir(f'{output_dir}/input_imgs_{idx}')
  
-                for i in range(noisy_patches.shape[1]):
-                    input_reconstruction = reconstruct_image(patches=noisy_patches[:,i,:].view(-1, 3, self.config.patch_size, self.config.patch_size), original_shape=(D, D))
-                    input_image = transforms.ToPILImage()(input_reconstruction.cpu())
-                    input_image.save(f'{output_dir}/input_imgs_{idx}/test_{idx}_input_{i}.png')
+                #for i in range(noisy_patches.shape[1]):
+                #    input_reconstruction = reconstruct_image(patches=noisy_patches[:,i,:].view(-1, 3, self.config.patch_size, self.config.patch_size), original_shape=(D, D))
+                #    input_image = transforms.ToPILImage()(input_reconstruction.cpu())
+                #    input_image.save(f'{output_dir}/input_imgs_{idx}/test_{idx}_input_{i}.png')
                     
                 if output_dir:
+
+                    patches_tensor = torch.ones_like(outputs)
+
+                    patch_count = patches_fun.combine_patches_2d(patches_tensor, self.config.patch_size, (1,1,150,150), padding = self.config.patch_size, stride=10, dilation=1).squeeze(0)
                     
                     # Save the entire image.
                     # print(outputs.shape)
-                    outputs_reconstruction = reconstruct_image(patches=outputs, original_shape=(D, D))
-                    clean_patches_reconstruction = reconstruct_image(patches=clean_patches, original_shape=(D, D))
+                    #outputs_reconstruction = reconstruct_image(patches=outputs, original_shape=(D, D))
+                    outputs_reconstruction = patches_fun.combine_patches_2d(outputs, self.config.patch_size, (1,1,150,150), padding = self.config.patch_size, stride=10, dilation=1).squeeze(0)
+                    outputs_reconstruction = outputs_reconstruction / patch_count
+                    #clean_patches_reconstruction = reconstruct_image(patches=clean_patches, original_shape=(D, D))
+                    clean_patches_reconstruction = patches_fun.combine_patches_2d(clean_patches, self.config.patch_size, (1,1,150,150), padding = self.config.patch_size, stride=10, dilation=1).squeeze(0)
+                    clean_patches_reconstruction = clean_patches_reconstruction / patch_count
+
                     output_image = transforms.ToPILImage()(np.clip(outputs_reconstruction.cpu(), 0, 1))
                     clean_image = transforms.ToPILImage()(np.clip(clean_patches_reconstruction.cpu(), 0, 1))
                     output_image.save(output_dir / f"test_{idx}_output_image.png")
