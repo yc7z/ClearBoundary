@@ -18,7 +18,6 @@ from scenic.projects.boundary_attention.dataset_lib.datasets import kaleidoshape
 import matplotlib.pyplot as plt
  
 import numpy as np
-#from skimage.filters import gaussian
 import scipy.stats as stats
 from os.path import join
 import os
@@ -43,14 +42,13 @@ def create_batch(img_path, output_path, in_noise = 0, noise_lvls = [0.3,0.4], nu
 
     clean_img = np.array(clean_img)/255.0
 
-    #clean_img = np.clip(np.array(clean_img + np.random.normal(0, in_noise, clean_img.shape)), 0, 1)
 
     for sigma in noise_lvls:
         noise_fun = lambda x, s: np.clip(np.array(x + np.random.normal(0, s, x.shape)), 0, 1)
 
         if not(os.path.exists(f'{output_path}/noise_lvl_{sigma}/') and os.path.isdir(f'{output_path}/noise_lvl_{sigma}/')):
             os.mkdir(f'{output_path}/noise_lvl_{sigma}/')
-        #print("Sigma lvl: ", sigma)
+            
         for i in range(num_per_lvl):
             noisy_img = noise_fun(clean_img, sigma)
 

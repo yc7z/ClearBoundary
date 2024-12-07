@@ -1,9 +1,6 @@
 import PIL
-
-import matplotlib.pyplot as plt
  
 import numpy as np
-from os.path import join
 import os
 
 
@@ -26,7 +23,6 @@ def create_batch(img_path, output_path, in_noise = 0, noise_lvls = [0.3,0.4], nu
 
         if not(os.path.exists(f'{output_path}/noise_lvl_{sigma}/') and os.path.isdir(f'{output_path}/noise_lvl_{sigma}/')):
             os.mkdir(f'{output_path}/noise_lvl_{sigma}/')
-        #print("Sigma lvl: ", sigma)
         for i in range(num_per_lvl):
             noisy_img = noise_fun(clean_img, sigma)
 

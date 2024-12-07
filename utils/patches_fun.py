@@ -1,9 +1,5 @@
 
 import torch
-import numpy as np
-import torch.nn.functional as F
-from torchvision import transforms
-
 
 #https://stackoverflow.com/questions/68150248/how-to-extract-overlapping-patches-from-a-3d-volume-and-recreate-the-input-shape
 
