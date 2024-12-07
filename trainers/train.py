@@ -87,15 +87,6 @@ class Trainer:
         # For 1 channel
         noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), noisy_patches.size(1), -1)
         clean_patches = clean_patches.squeeze().view(clean_patches.size(0), -1)
-
-        # noisy_patches = noisy_patches.squeeze().view(noisy_patches.size(0), -1)
-        # clean_patches = torch.unsqueeze(clean_patches, 0)
-        # clean_patches = clean_patches.view(clean_patches.size(0), -1)
-        # clean_patches = torch.squeeze(clean_patches)
-        
-        # print(clean_patches.shape)
-        # print(noisy_patches.shape)
-
         return noisy_patches, clean_patches
 
     def train(self, train_loader: DataLoader, val_loader: DataLoader) -> None:
@@ -143,12 +134,6 @@ class Trainer:
                     input_image.save(f'{output_dir}/input_imgs_{idx}/test_{idx}_input_{i}.png')
                     
                 if output_dir:
-                    # for i in range(outputs.size(0)):
-                    #     output_patch = transforms.ToPILImage()(outputs[i].cpu())
-                    #     clean_patch = transforms.ToPILImage()(clean_patches[i].cpu())
-                        
-                    #     output_patch.save(output_dir / f"test_{idx}_output_patch_{i}.png")
-                    #     clean_patch.save(output_dir / f"test_{idx}_clean_patch_{i}.png")
                     
                     # Save the entire image.
                     outputs_reconstruction = reconstruct_image(patches=outputs, original_shape=(D, D))
