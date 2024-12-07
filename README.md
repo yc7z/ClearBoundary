@@ -26,6 +26,6 @@ After you have the boundary results saved as images, if you want to use the data
   ...
 ```
 
-Once you have this, then you can simply run `python -m main` to start training. 
+Once you have this, then you can simply run `python -m main` to start training. To train on boundary results using overlapping patches, modify `main.py` to use `trainers.train_overlapping`.
 
 We provide some checkpoints of our model at https://drive.google.com/drive/folders/1xcZgzVohyuVok8gsHjAS6lO_c9nWSNgc?usp=sharing
