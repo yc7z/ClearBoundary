@@ -9,7 +9,7 @@ from torchvision import transforms
 
 from models.transformer import Transformer
 from utils.config import Config
-from checkpointer import save_checkpoint, load_checkpoint
+from utils.checkpointer import save_checkpoint, load_checkpoint
 import math
 import numpy as np
 import os
