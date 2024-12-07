@@ -1,8 +1,8 @@
 import wandb
-from dataloader_three_channels import ImageDataset
+from dataloader_creation.dataloader_three_channels import ImageDataset
 from pathlib import Path
 from torch.utils.data import DataLoader
-from train_three_channels import Trainer
+from trainers.train_three_channels import Trainer
 from utils.config import Config
 
 def main(config: Config):

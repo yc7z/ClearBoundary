@@ -1,8 +1,8 @@
 import wandb
-from dataloader import ImageDataset
+from dataloader_creation.dataloader import ImageDataset
 from pathlib import Path
 from torch.utils.data import DataLoader
-from train import Trainer
+from trainers.train import Trainer
 from utils.config import Config
 
 def main(config: Config):

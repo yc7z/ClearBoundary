@@ -7,6 +7,9 @@ from torchvision import transforms
 from PIL import Image
 import re
 
+from utils import patches_fun
+
+
 class ImageDataset(Dataset):
     def __init__(
         self,
@@ -37,7 +40,7 @@ class ImageDataset(Dataset):
             for file_name in image_folder.iterdir():
                 if img_pattern.match(str(file_name)):
                     clean_image_path = file_name
-
+                    
             if not clean_image_path.exists():
                 raise FileNotFoundError(f"Missing clean image: {clean_image_path}")
 
@@ -62,11 +65,8 @@ class ImageDataset(Dataset):
 
         if h % self.patch_size != 0 or w % self.patch_size != 0:
             raise ValueError("Image dimensions must be divisible by patch_size.")
-
-        patches = image_tensor.unfold(1, self.patch_size, self.patch_size)
-        patches = patches.unfold(2, self.patch_size, self.patch_size)
-        patches = patches.contiguous().view(1, -1, self.patch_size, self.patch_size)
-        patches = patches.permute(1, 0, 2, 3)  # (num_patches, channels, patch_size, patch_size)
+        
+        patches = patches_fun.extract_patches_2ds(torch.unsqueeze(image_tensor, 0), self.patch_size, padding=5, stride=10)
         return [patch for patch in patches]
 
     def __len__(self):
