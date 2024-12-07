@@ -10,7 +10,6 @@ from torchvision import transforms
 from models.transformer import Transformer
 from utils.config import Config
 from checkpointer import save_checkpoint, load_checkpoint
-import math
 import numpy as np
 import os
 
@@ -56,7 +55,18 @@ class Trainer:
             # outputs: (num_patches, d), where d = patch_size * patch_size * num_channels
             # clean_patches: (num_patches, d)
             outputs = self.model(noisy_patches)
-            loss = self.criterion(outputs, clean_patches)
+            
+            # reconstruct from overlapping patches before computing the loss
+            outputs = outputs.view(-1, 3, self.config.patch_size, self.config.patch_size)
+            clean_patches = clean_patches.view(-1, 3, self.config.patch_size, self.config.patch_size)
+            patches_tensor = torch.ones_like(outputs)
+            patch_count = patches_fun.combine_patches_2d(patches_tensor, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
+            outputs_reconstruction = patches_fun.combine_patches_2d(outputs, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
+            outputs_reconstruction = outputs_reconstruction / patch_count
+            clean_patches_reconstruction = patches_fun.combine_patches_2d(clean_patches, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
+            clean_patches_reconstruction = clean_patches_reconstruction / patch_count
+            
+            loss = self.criterion(outputs_reconstruction, clean_patches_reconstruction)
             loss.backward()
             self.optimizer.step()
 
@@ -74,8 +84,17 @@ class Trainer:
                 noisy_patches, clean_patches = self.prepare_data(noisy_patches, clean_patches)
 
                 outputs = self.model(noisy_patches)
-                loss = self.criterion(outputs, clean_patches)
-
+                # reconstruct from overlapping patches before computing the loss
+                outputs = outputs.view(-1, 3, self.config.patch_size, self.config.patch_size)
+                clean_patches = clean_patches.view(-1, 3, self.config.patch_size, self.config.patch_size)
+                patches_tensor = torch.ones_like(outputs)
+                patch_count = patches_fun.combine_patches_2d(patches_tensor, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
+                outputs_reconstruction = patches_fun.combine_patches_2d(outputs, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
+                outputs_reconstruction = outputs_reconstruction / patch_count
+                clean_patches_reconstruction = patches_fun.combine_patches_2d(clean_patches, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
+                clean_patches_reconstruction = clean_patches_reconstruction / patch_count
+                
+                loss = self.criterion(outputs_reconstruction, clean_patches_reconstruction)
                 epoch_loss += loss.item() * noisy_patches.size(0)
 
         return epoch_loss / len(dataloader.dataset)
@@ -132,31 +151,22 @@ class Trainer:
 
                 # outputs has size (batch_size, num_patches, n_channels, patch_size, patch_size)
                 outputs = self.model(noisy_patches)
-                D = int(math.sqrt(outputs.size(0)) * self.config.patch_size)
                 outputs = outputs.view(-1, 3, self.config.patch_size, self.config.patch_size)
                 clean_patches = clean_patches.view(-1, 3, self.config.patch_size, self.config.patch_size)
 
                 if not(os.path.exists(f'{output_dir}/input_imgs_{idx}') and os.path.isdir(f'{output_dir}/input_imgs_{idx}')):
                     os.mkdir(f'{output_dir}/input_imgs_{idx}')
- 
-                #for i in range(noisy_patches.shape[1]):
-                #    input_reconstruction = reconstruct_image(patches=noisy_patches[:,i,:].view(-1, 3, self.config.patch_size, self.config.patch_size), original_shape=(D, D))
-                #    input_image = transforms.ToPILImage()(input_reconstruction.cpu())
-                #    input_image.save(f'{output_dir}/input_imgs_{idx}/test_{idx}_input_{i}.png')
                     
                 if output_dir:
 
                     patches_tensor = torch.ones_like(outputs)
 
-                    patch_count = patches_fun.combine_patches_2d(patches_tensor, self.config.patch_size, (1,1,150,150), padding = self.config.patch_size, stride=10, dilation=1).squeeze(0)
+                    patch_count = patches_fun.combine_patches_2d(patches_tensor, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
                     
                     # Save the entire image.
-                    # print(outputs.shape)
-                    #outputs_reconstruction = reconstruct_image(patches=outputs, original_shape=(D, D))
-                    outputs_reconstruction = patches_fun.combine_patches_2d(outputs, self.config.patch_size, (1,1,150,150), padding = self.config.patch_size, stride=10, dilation=1).squeeze(0)
+                    outputs_reconstruction = patches_fun.combine_patches_2d(outputs, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
                     outputs_reconstruction = outputs_reconstruction / patch_count
-                    #clean_patches_reconstruction = reconstruct_image(patches=clean_patches, original_shape=(D, D))
-                    clean_patches_reconstruction = patches_fun.combine_patches_2d(clean_patches, self.config.patch_size, (1,1,150,150), padding = self.config.patch_size, stride=10, dilation=1).squeeze(0)
+                    clean_patches_reconstruction = patches_fun.combine_patches_2d(clean_patches, self.config.patch_size, (1,1,64,64), padding=2, stride=4, dilation=1).squeeze(0)
                     clean_patches_reconstruction = clean_patches_reconstruction / patch_count
 
                     output_image = transforms.ToPILImage()(np.clip(outputs_reconstruction.cpu(), 0, 1))

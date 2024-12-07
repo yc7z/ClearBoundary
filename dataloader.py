@@ -2,10 +2,9 @@ from pathlib import Path
 from typing import Tuple, List, Dict
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
-import numpy as np
 import re
 
 class ImageDataset(Dataset):
@@ -39,12 +38,11 @@ class ImageDataset(Dataset):
                 if img_pattern.match(str(file_name)):
                     clean_image_path = file_name
 
-            # clean_image_path = image_folder / "clean_img_boundaries.png"
             if not clean_image_path.exists():
                 raise FileNotFoundError(f"Missing clean image: {clean_image_path}")
 
             for noise_level_folder in image_folder.iterdir():
-                if not noise_level_folder.is_dir():
+                if not noise_level_folder.is_dir() or '0.3' not in str(noise_level_folder):
                     continue
 
                 noisy_image_paths = sorted(noise_level_folder.glob("*.png"))
@@ -60,7 +58,6 @@ class ImageDataset(Dataset):
 
     def _extract_patches(self, image_tensor: torch.Tensor) -> List[torch.Tensor]:
         """Splits an image into patches of size patch_size x patch_size."""
-        # image_tensor = transforms.ToTensor()(image)  # Convert to tensor
         _, h, w = image_tensor.shape
 
         if h % self.patch_size != 0 or w % self.patch_size != 0:
@@ -99,17 +96,3 @@ class ImageDataset(Dataset):
             targets = [self.transform(tgt) for tgt in targets]
 
         return torch.stack(inputs), torch.stack(targets)
-
-
-# if __name__ == '__main__':
-#     data_dir = Path("data/")
-#     patch_size = 15
-#     transform = transforms.Compose([
-#         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-#     ])
-#     dataset = ImageDataset(data_dir=data_dir, patch_size=patch_size, transform=transform)
-#     dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-
-#     for batch_inputs, batch_targets in dataloader:
-#         print(f"Inputs: {batch_inputs.shape}, Targets: {batch_targets.shape}")
-#         break

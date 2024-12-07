@@ -14,8 +14,6 @@ class ImageDataset(Dataset):
         self,
         data_dir: Path,
         patch_size: int,
-        #padding: int,
-        #stride: int,
         transform: callable = None,
     ):
         """
@@ -26,30 +24,24 @@ class ImageDataset(Dataset):
         """
         self.data_dir = data_dir
         self.patch_size = patch_size
-        #self.padding = padding
-        #self.stride = stride
         self.transform = transform
         self.data_points = self._prepare_data()
 
     def _prepare_data(self) -> List[Dict[str, List[Path]]]:
         """Prepares the dataset by indexing clean and noisy images."""
         data_points = []
-        img_pattern = re.compile(r'.*clean_img_?.png')
+        img_pattern = re.compile(r'.*original_image.png')
 
-        input_pattern = re.compile(r'.*input_img_?.png')
+        input_pattern = re.compile(r'.*first_noisy_image.png')
 
         for image_folder in self.data_dir.iterdir():
             if not image_folder.is_dir() or 'lol' in str(image_folder):
                 continue
 
-            #if not "building" in str(image_folder):
-            #    continue
-            
             for file_name in image_folder.iterdir():
                 if img_pattern.match(str(file_name)):
                     clean_image_path = file_name
 
-            # clean_image_path = image_folder / "clean_img_boundaries.png"
             if not clean_image_path.exists():
                 raise FileNotFoundError(f"Missing clean image: {clean_image_path}")
             
@@ -68,9 +60,6 @@ class ImageDataset(Dataset):
                 if not noise_level_folder.is_dir():
                     continue
 
-                #if not "0.1" in str(noise_level_folder):
-                #    continue
-
                 noisy_image_paths = sorted(noise_level_folder.glob("*.png"))
                 if not noisy_image_paths:
                     raise FileNotFoundError(f"No noisy images in {noise_level_folder}")
@@ -86,17 +75,12 @@ class ImageDataset(Dataset):
 
     def _extract_patches(self, image_tensor: torch.Tensor) -> List[torch.Tensor]:
         """Splits an image into patches of size patch_size x patch_size."""
-        # image_tensor = transforms.ToTensor()(image)  # Convert to tensor
         _, h, w = image_tensor.shape
 
         if h % self.patch_size != 0 or w % self.patch_size != 0:
             raise ValueError("Image dimensions must be divisible by patch_size.")
-
-        #patches = image_tensor.unfold(1, self.patch_size, self.patch_size)
-        #patches = patches.unfold(2, self.patch_size, self.patch_size)
-        #patches = patches.contiguous().view(3, -1, self.patch_size, self.patch_size)
-        #patches = patches.permute(1, 0, 2, 3)  # (num_patches, channels, patch_size, patch_size)
-        patches = patches_fun.extract_patches_2ds(torch.unsqueeze(image_tensor, 0), self.patch_size, padding=self.patch_size, stride=10)
+        
+        patches = patches_fun.extract_patches_2ds(torch.unsqueeze(image_tensor, 0), self.patch_size, padding=2, stride=4)
         return [patch for patch in patches]
 
     def __len__(self):

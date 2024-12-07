@@ -35,41 +35,36 @@ def main(config: Config):
     elif config.mode == "evaluate":
         trainer.evaluate(test_loader, config.output_dir)
 
-        
-
 
 if __name__ == "__main__":
     train_config = Config(
-        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
-        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/val_data",
-        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/test_data",
-        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_20",
+        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/noisy_imagenet64_train",
+        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/noisy_imagenet64_val",
+        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/noisy_imagenet64_test",
+        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_23",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
-        patch_size=15,
+        patch_size=8,
         n_blocks=6,
         n_heads=4,
         d_model=384,
         d_hidden=384,
         dropout_p=0.1,
         lr=2e-4,
-        num_epochs=1,
+        num_epochs=20,
         validate_every=1,
         mode="train",
         load_from_checkpoint=False,
-        run_id=20,
+        run_id=23,
     )
-
-    # main(train_config)
-    
-    # print("Training complete.")
+    main(train_config)
     
     test_config = Config(
-        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/train_data",
-        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/val_data",
-        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/dataset/test_data",
-        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_20",
+        train_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/noisy_imagenet64_train",
+        val_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/noisy_imagenet64_val",
+        test_data_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/noisy_imagenet64_test",
+        output_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/output_on_test_23",
         checkpoint_dir="/scratch/ssd004/scratch/yuchongz/clear_boundary_artifacts/checkpoints",
-        patch_size=15,
+        patch_size=8,
         n_blocks=6,
         n_heads=4,
         d_model=384,
@@ -80,7 +75,7 @@ if __name__ == "__main__":
         validate_every=1,
         mode="evaluate",
         load_from_checkpoint=True,
-        run_id=20,
+        run_id=23,
     )
     
     main(test_config)
